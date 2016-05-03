@@ -75,11 +75,21 @@ def rZoneParamsFromLogFile(expDir, FODataFile):
 
     while lines[currHeaderLine][0] == '#':
         if ('Reinforcement' in lines[currHeaderLine]):
-            rZone_rInner = int(lines[currHeaderLine+1].split(' ')[-2])
-            rZone_rOuter = int(lines[currHeaderLine+2].split(' ')[-2])
-            rZone_max = int(lines[currHeaderLine+3].split(' ')[-3])
-            rZone_gExp = int(lines[currHeaderLine+4].split(' ')[-2])
+            try:
+                rZone_rInner = int(lines[currHeaderLine+1].split(' ')[-2])
+                rZone_rOuter = int(lines[currHeaderLine+2].split(' ')[-2])
+                rZone_max = int(lines[currHeaderLine+3].split(' ')[-3])
+                rZone_gExp = int(lines[currHeaderLine+4].split(' ')[-2])
+                rZone_bl = 0
 
-            return rZone_rInner, rZone_rOuter, rZone_max, rZone_gExp
+                return rZone_rInner, rZone_rOuter, rZone_max, rZone_bl, rZone_gExp
+            except:
+                rZone_rInner = int(lines[currHeaderLine+1].split(' ')[-2])
+                rZone_rOuter = int(lines[currHeaderLine+2].split(' ')[-2])
+                rZone_max = int(lines[currHeaderLine+3].split(' ')[-3])
+                rZone_bl = int(lines[currHeaderLine+4].split(' ')[-3])
+                rZone_gExp = int(lines[currHeaderLine+5].split(' ')[-2])
+
+                return rZone_rInner, rZone_rOuter, rZone_max, rZone_bl, rZone_gExp
 
         currHeaderLine += 1
