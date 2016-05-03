@@ -23,7 +23,7 @@ from velocityDistributionPlots import plotVeloHistogram_fancy, velocitySummaryPl
 # Import custom data processing functions
 path.insert(1, '/Users/hannah/Dropbox/code/flyVR/utilities/')
 from loadSingleTrial import loadSingleVRLogfile, rZoneParamsFromLogFile
-from loadObjectCoords import loadObjectCoords
+from loadObjectCoords import loadObjectCoords, loadObjectCoordIdentities
 from objectInteractionPlots import modulationOfRuns, residencyWithHistograms_splitOnWalking,\
     curvatureVsHeading_DistanceBoxplot, plotResidencyInMiniarena
 
@@ -32,7 +32,7 @@ path.insert(1, '/Users/hannah/Dropbox/code/trajectoryAnalysis/')
 from downsample import donwsampleFOData
 from trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject, cartesian2polar,\
     polarCurvature
-from periodicWorldAnalysis import collapseToMiniArena
+from periodicWorldAnalysis import collapseToMiniArena, collapseTwoObjGrid
 
 sns.set_style('ticks')
 
@@ -98,7 +98,7 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     header, FOData, numFrames, frameRange, calibParams, coordFile = loadSingleVRLogfile(expDir, FODataFile)
 
     # Extract reinforcement zone parameter .............................................................................
-    rZone_rInner, rZone_rOuter, rZone_max, rZone_gExp = rZoneParamsFromLogFile(expDir, FODataFile)
+    rZone_rInner, rZone_rOuter, rZone_max, rZone_bl, rZone_gExp = rZoneParamsFromLogFile(expDir, FODataFile)
 
     # Read in object coordinates .......................................................................................
     visibleObjectCoords, invisibleObjectCoords, origin = loadObjectCoords(dataDir, coordFile)
@@ -433,6 +433,278 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
 
     # Alternatively use numpy array:
     # toSave=np.vstack((time_ds,xPos_ds, yPos_ds, xPosMA_ds, yPosMA_ds, angle_ds, vRot_ds,vTrans_ds,objDistance,gamma))
+
+    # Save data in this format as *.npy for easy loading..
+    np.save(expDir + FODataFile[:-4], toSave)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    print('\n \n Analysis ran successfully. \n \n')
+    # ------------------------------------------------------------------------------------------------------------------
+
+    plt.close('all')
+
+    return 0
+
+
+def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
+    # fileToAnalyse should be to complete path to the logfile of the FlyOver trial to be analysed.
+
+    # TODO: add savePlots,recomputeFlyData as function arguments
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Extract folder and file name info
+    # ------------------------------------------------------------------------------------------------------------------
+
+    print('Data file: \n' + fileToAnalyse + '\n')
+
+    dataDir = sep.join(fileToAnalyse.split(sep)[0:-3]) + sep
+    flyID = fileToAnalyse.split(sep)[-2]
+    expDir = sep.join(fileToAnalyse.split(sep)[0:-1]) + sep
+
+    if not ('males' in expDir.split(sep)[-4] or 'females'in expDir.split(sep)[-4] or 'FlyOverDebugging'):
+        print('You selected an invalid data directory.\n' +
+              'Expected folder structure of the selected path is some/path/to/experimentName/flyGender/rawData/')
+        exit(1)
+
+    genotype = expDir.split(sep)[-5]
+
+    # create analysis dir
+    analysisDir = sep.join(dataDir.split(sep)[:-1]) + sep + 'analysis' + sep
+    try:
+        mkdir(analysisDir)
+    except OSError:
+        print('Analysis directory already exists.')
+
+    FODataFile = fileToAnalyse.split(sep)[-1]
+    FODataFiles = [filepath.split(sep)[-1] for filepath in glob(expDir + '*.txt')]
+    FODataFiles = sorted(FODataFiles)
+
+    trial = FODataFiles.index(FODataFile) + 1
+
+    if ('train' in FODataFile):
+        rZones = 'on'
+    else:
+        rZones = 'off'
+
+    dataFileParts = FODataFile.split('_')
+
+    trialType = dataFileParts[-3]
+    invisible = 'off'
+    objecttype = 'visible'
+
+    titleString = genotype + ' fly "' + flyID + '" in ' + dataFileParts[0] + ' of ' + dataFileParts[1] + ' and ' + \
+        dataFileParts[2] + '\n' + trialType + ' trial'
+
+    print(titleString)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Load or read in logfile data
+    # ------------------------------------------------------------------------------------------------------------------
+
+    # Read in logfile data, parse header ...............................................................................
+    header, FOData, numFrames, frameRange, calibParams, coordFile = loadSingleVRLogfile(expDir, FODataFile)
+
+    # Extract reinforcement zone parameter .............................................................................
+    #rZone_rInner, rZone_rOuter, rZone_max, rZone_bl, rZone_gExp = rZoneParamsFromLogFile(expDir, FODataFile)
+
+    # Read in object coordinates .......................................................................................
+    visibleObjectCoords, visibleObjectName, invisibleObjectCoords, origin = loadObjectCoordIdentities(dataDir, coordFile)
+
+    # Compute movement velocities ......................................................................................
+    logTime = np.copy(FOData[:, 0])
+    time = np.linspace(0, logTime[-1], numFrames)
+
+    angle = convertRawHeadingAngle(FOData[:, 5])
+
+    # N = 60
+    # vTrans, vRot, vTransFilt, vRotFilt = velocityFromTrajectory(time, angle, FOData[:, 1], FOData[:, 2], N, numFrames)
+
+    # Down sample data to 20 Hz ........................................................................................
+    samplingRate = 20
+    time_ds, xPos_ds, yPos_ds, angle_ds, numFrames_ds \
+        = donwsampleFOData(samplingRate, logTime, time, FOData[:, 1], FOData[:, 2], angle)
+
+    # and compute downsampled velocities
+    N = 5
+    vTrans_ds, vRot_ds, vTransFilt_ds, vRotFilt_ds \
+        = velocityFromTrajectory(time_ds, angle_ds, xPos_ds, yPos_ds, N, numFrames_ds)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Generate basic analysis plots
+    # ------------------------------------------------------------------------------------------------------------------
+    # Time step plot ...................................................................................................
+
+    plotStp = 5
+    tstpfig = plotFlyVRtimeStp(plotStp, FOData[:, 0], titleString)
+
+    makeNestedPlotDirectory(analysisDir, 'timeStepPlot/', trialType + 'Trial' + sep)
+
+    tstpfig.savefig(analysisDir + 'timeStepPlot/' + trialType + 'Trial' + sep + FODataFile[0:-4] + '_timeStepPlot.pdf',
+                    format='pdf')
+
+    # Plot of walking trace (+ colorbar for time) with object locations ................................................
+
+    coneShape = np.asarray([bool('Cone' in objName) for objName in visibleObjectName])
+    cyliShape = np.asarray([bool('Cyli' in objName) for objName in visibleObjectName])
+
+    tStart = 0
+    tEnd = len(FOData[:, 1])
+    tStep = 72
+    frameRange = range(tStart, tEnd, tStep)
+    colMap = 'Accent'
+    arrowLength = 4
+
+    trajfig = plt.figure(figsize=(10, 10))
+    gs = gridspec.GridSpec(2, 1, height_ratios=np.hstack((10, 1)))
+
+    axTraj = trajfig.add_subplot(gs[0])
+    axTime = trajfig.add_subplot(gs[1])
+
+    plotPosInRange(axTraj, axTime, frameRange, FOData[:, 0], FOData[:, 1], FOData[:, 2], np.pi/180*FOData[:, 5],
+                   colMap, arrowLength, 0.5, 5)
+    axTraj.scatter(visibleObjectCoords[coneShape, 0], visibleObjectCoords[coneShape, 1], 50, alpha=0.5,
+                   facecolors='black', edgecolors='none', marker='^')
+    axTraj.scatter(visibleObjectCoords[cyliShape, 0], visibleObjectCoords[cyliShape, 1], 50, alpha=0.5,
+                   facecolors='black', edgecolors='none', marker='s')
+    #axTraj.scatter(invisibleObjectCoords[4:, 0], invisibleObjectCoords[4:, 1], 50, alpha=0.5,
+    #               facecolors='none', edgecolors='black')
+    axTraj.set_xlabel(header[1], fontsize=12)
+    axTraj.set_ylabel(header[2], fontsize=12)
+    axTraj.set_title('Walking trace of ' + titleString, fontsize=14)
+    axTraj.set_xlim([max(-650, min(FOData[:, 1]) - 20), min(650, max(FOData[:, 1]) + 20)])
+    axTraj.set_ylim([max(-650, min(FOData[:, 2]) - 20), min(650, max(FOData[:, 2]) + 20)])
+    myAxisTheme(axTraj)
+
+    axTime.set_xlabel(header[0], fontsize=12)
+    plt.xlim((0, FOData[-1, 0]))
+    timeAxisTheme(axTime)
+
+    makeNestedPlotDirectory(analysisDir, 'tracePlot/', trialType + 'Trial' + sep)
+
+    trajfig.savefig(analysisDir + 'tracePlot/' + trialType + 'Trial' + sep
+                    + FODataFile[0:-4] + '_traceObjectPlot.pdf', format='pdf')
+
+    # Visualise strength of optogenetic stimulation ....................................................................
+
+    rEvents = FOData[:, 11]
+    # downsample rEvents
+    f_rEvents = interp1d(time, rEvents, kind='linear')
+    rEvents_ds = f_rEvents(time_ds)
+
+    tStep = 72
+    frameRange = range(tStart, tEnd, tStep)
+
+    trajRZfig = plt.figure(figsize=(10, 10))
+    axTraj = trajRZfig.add_subplot(111)
+
+    axTraj.scatter(visibleObjectCoords[coneShape, 0], visibleObjectCoords[coneShape, 1], 50, alpha=0.5,
+                   facecolors='black', edgecolors='none', marker='^')
+    axTraj.scatter(visibleObjectCoords[cyliShape, 0], visibleObjectCoords[cyliShape, 1], 50, alpha=0.5,
+                   facecolors='black', edgecolors='none', marker='s')
+
+    plt.plot(FOData[frameRange, 1], FOData[frameRange, 2], marker='.', markerfacecolor='grey',
+             markeredgecolor='none', linestyle='none', alpha=0.1)
+
+    #overlay reinforcement val
+    axTraj.scatter(FOData[frameRange, 1], FOData[frameRange, 2], s=rEvents[frameRange]*3,
+                   c=rEvents[frameRange]*3, alpha=0.7, cmap=plt.get_cmap('Reds'))
+
+    axTraj.set_xlabel(header[1], fontsize=12)
+    axTraj.set_ylabel(header[2], fontsize=12)
+    axTraj.set_title('Walking trace of ' + titleString, fontsize=14)
+    axTraj.set_xlim([max(-650, min(FOData[:, 1]) - 20), min(650, max(FOData[:, 1]) + 20)])
+    axTraj.set_ylim([max(-650, min(FOData[:, 2]) - 20), min(650, max(FOData[:, 2]) + 20)])
+    axTraj.set_aspect('equal')
+    myAxisTheme(axTraj)
+
+    makeNestedPlotDirectory(analysisDir, 'tracePlotRZ/', trialType + 'Trial' + sep)
+
+    trajRZfig.savefig(analysisDir + 'tracePlotRZ/' + trialType + 'Trial' + sep
+                    + FODataFile[0:-4] + '_traceObjectPlot.pdf', format='pdf')
+
+    # Plot velocity distributions of downs sampled data ................................................................
+    rotLim = (-5, 5)
+    transLim = (0, 30)
+    angleLim = (-np.pi, np.pi)
+    summaryVeloFig_ds = velocitySummaryPlot(time_ds, vTrans_ds, vTransFilt_ds, vRot_ds, vRotFilt_ds, angle_ds, rotLim,
+                                            transLim, angleLim, 'Down sampled velocity traces, ' + titleString)
+
+    makeNestedPlotDirectory(analysisDir, 'velocityTraces/', trialType + 'Trial' + sep)
+
+    summaryVeloFig_ds.savefig(analysisDir + 'velocityTraces/' + trialType + 'Trial' + sep
+                              + FODataFile[0:-4] + '_veloTraces_ds.pdf', format='pdf')
+
+    # ------------------------------------------------------------------------------------------------------------------
+    #  Collapse traces to single object cell and plot resulting trace
+    # ------------------------------------------------------------------------------------------------------------------
+
+    # Collapse to 'mini-arena' while preserving the global heading .....................................................
+    gridSize = 60.0 # closest distance between landmarks
+    gridRepeat = (6, 5) # grid height in repeats of gridSize in x and y
+    xPosMA, yPosMA = collapseTwoObjGrid(FOData[:, 1], FOData[:, 2], gridSize, gridRepeat)
+
+    # Compute donw sampled collapsed traces
+    f_xPosMA = interp1d(time, xPosMA, kind='linear')
+    f_yPosMA = interp1d(time, yPosMA, kind='linear')
+
+    xPosMA_ds = f_xPosMA(time_ds)
+    yPosMA_ds = f_yPosMA(time_ds)
+
+    # Plot collapsed, down sampled trace ...............................................................................
+    tStart = 0
+    tEnd = numFrames_ds
+    tStep = 4
+    frameRange = range(tStart, tEnd, tStep)
+    colMap = 'Accent'
+
+    colTrFig = plt.figure(figsize=(9, 10))
+    gs = gridspec.GridSpec(2, 1, height_ratios=np.hstack((10, 1)))
+
+    colTrFig.suptitle('Collapsed walking trace ("mini arena" with central object)\n' + titleString, fontsize=14)
+
+    axTraj = colTrFig.add_subplot(gs[0])
+    axTime = colTrFig.add_subplot(gs[1])
+    plotPosInRange(axTraj, axTime, frameRange, time_ds, xPosMA_ds, yPosMA_ds, angle_ds, colMap, 4, 0.5, 7)
+
+    axTraj.plot(gridSize/2, -gridSize/2, 'ks', markersize=8)
+    axTraj.plot(gridSize/2, gridSize/2, 'k^', markersize=10)
+    axTraj.plot(3*gridSize/2, -gridSize/2, 'k^', markersize=10)
+    axTraj.plot(3*gridSize/2, gridSize/2, 'ks', markersize=8)
+
+    axTraj.set_xlabel(header[1], fontsize=12)
+    axTraj.set_ylabel(header[2], fontsize=12)
+    axTraj.set_ylim([-(5+gridSize), gridSize+5])
+    axTraj.set_xlim([-5, 2*gridSize+5])
+    myAxisTheme(axTraj)
+
+    axTime.set_xlabel(header[0], fontsize=12)
+    plt.xlim((0, time_ds[-1]))
+    timeAxisTheme(axTime)
+
+    # if rZones == 'on':
+    #    rZoneRange = float(rZone_rOuter - rZone_rInner)
+    #    for zRad in range(rZone_rInner, rZone_rOuter):
+    #        circle1 = plt.Circle((0, 0), zRad, color='r', alpha=1.0/rZoneRange)
+    #        axTraj.add_artist(circle1)
+
+    makeNestedPlotDirectory(analysisDir, 'tracePlotMA/', trialType + 'Trial' + sep)
+
+    colTrFig.savefig(analysisDir + 'tracePlotMA/' + trialType + 'Trial' + sep
+                     + FODataFile[0:-4] + '_traceObjectPlot_ds.pdf', format='pdf')
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Save position and velocities for future analysis
+    # ------------------------------------------------------------------------------------------------------------------
+
+    toSave = {'time': time_ds,
+              'xPos': xPos_ds,
+              'yPos': yPos_ds,
+              'xPosInMiniarena': xPosMA_ds,
+              'yPosInMiniarena': yPosMA_ds,
+              'headingAngle': angle_ds,
+              'rotVelo': vRot_ds,
+              'transVelo': vTrans_ds,
+              'rEvents': rEvents_ds}
 
     # Save data in this format as *.npy for easy loading..
     np.save(expDir + FODataFile[:-4], toSave)
