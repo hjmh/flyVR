@@ -71,12 +71,19 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
 
     trial = FODataFiles.index(FODataFile) + 1
 
-    if 'rZones' in FODataFile:
+    # ------------------------------------------------------------------------------------------------------------------
+    # Load or read in logfile data
+    # ------------------------------------------------------------------------------------------------------------------
+
+    # Read in logfile data, parse header ...............................................................................
+    header, FOData, numFrames, frameRange, calibParams, coordFile = loadSingleVRLogfile(expDir, FODataFile)
+
+    if 'rZones' in coordFile:
         rZones = 'on'
     else:
         rZones = 'off'
 
-    if 'invisible' in FODataFile or 'Invisible' in FODataFile:
+    if 'invisible' in coordFile or 'Invisible' in coordFile:
         invisible = 'on'
         objecttype = 'invisible'
 
@@ -89,13 +96,6 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     titleString = genotype + ' fly "' + flyID + '" in ' + dataFileParts[0] + ' of ' + dataFileParts[1] + 's\n' + \
         'with reinforcement zones ' + rZones + ', trial' + str(trial)
     print(titleString)
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # Load or read in logfile data
-    # ------------------------------------------------------------------------------------------------------------------
-
-    # Read in logfile data, parse header ...............................................................................
-    header, FOData, numFrames, frameRange, calibParams, coordFile = loadSingleVRLogfile(expDir, FODataFile)
 
     # Extract reinforcement zone parameter .............................................................................
     rZone_rInner, rZone_rOuter, rZone_max, rZone_bl, rZone_gExp = rZoneParamsFromLogFile(expDir, FODataFile)
