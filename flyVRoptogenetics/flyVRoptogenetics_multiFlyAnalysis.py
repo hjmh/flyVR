@@ -29,7 +29,7 @@ from objectInteractionPlots import residencyWithHistograms_splitOnWalking, curva
 
 # Choose files to analyse ..............................................................................................
 
-baseDir = '/Volumes/jayaramanlab/Hannah/Projects/FlyVR/1_Experiments/FlyOver094/'
+baseDir = '/Volumes/jayaramanlab/Hannah/Projects/FlyVR/1_Experiments/'
 
 root = Tk()
 # prevents root window from appearing
