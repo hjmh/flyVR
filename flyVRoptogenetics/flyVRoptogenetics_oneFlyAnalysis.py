@@ -3,21 +3,16 @@
 __author__ = 'Hannah Haberkern, hjmhaberkern@gmail.com'
 
 import numpy as np
-from os import listdir, mkdir, walk
-from os.path import isfile, sep
-from sys import path, exit
+from os.path import sep
+from sys import path
 from glob import glob
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 from Tkinter import Tk
 from tkFileDialog import askdirectory, askopenfilename
 
 from flyVRoptogenetics_oneTrialBasicAnalysis import singleVROptogenTrialAnalysis
-
-path.insert(1, '/Users/hannah/Dropbox/code/plottingUtilities/')
-from plottingUtilities import makeNestedPlotDirectory
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Choose files to analyse
@@ -38,12 +33,6 @@ FODataFiles = sorted(FODataFiles)
 
 print('\n Analysing the following log files:\n')
 print(FODataFiles)
-
-xPosMAall = []
-yPosMAall = []
-xPosMAinvall = []
-yPosMAinvall = []
-
 
 for fileToAnalyse in FODataFiles:
     # ------------------------------------------------------------------------------------------------------------------

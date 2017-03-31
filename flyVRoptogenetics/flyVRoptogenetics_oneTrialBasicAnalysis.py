@@ -27,7 +27,6 @@ from loadObjectCoords import loadObjectCoords, loadObjectCoordIdentities
 from objectInteractionPlots import modulationOfRuns, residencyWithHistograms_splitOnWalking,\
     curvatureVsHeading_DistanceBoxplot, plotResidencyInMiniarena
 
-
 path.insert(1, '/Users/hannah/Dropbox/code/trajectoryAnalysis/')
 from downsample import donwsampleFOData
 from trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject, cartesian2polar,\
@@ -480,15 +479,18 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     FODataFiles = sorted(FODataFiles)
 
     trial = FODataFiles.index(FODataFile) + 1
+    trialType = 'pre'
+    rZones = 'off'
 
-    if ('train' in FODataFile):
+    if 'train' in FODataFile:
+        trialType = 'train'
         rZones = 'on'
-    else:
+    elif 'post' in FODataFile:
+        trialType = 'post'
         rZones = 'off'
 
     dataFileParts = FODataFile.split('_')
 
-    trialType = dataFileParts[-3]
     invisible = 'off'
     objecttype = 'visible'
 
