@@ -16,8 +16,11 @@ from tkFileDialog import askdirectory, askopenfilename
 
 from flyVR_oneTrialBasicAnalysis import singleVRTrialAnalysis
 
-path.insert(1, '/Users/hannah/Dropbox/code/plottingUtilities/')
-from plottingUtilities import makeNestedPlotDirectory
+# Set path to analysis code directory
+codeDir = sep.join(os.getcwd().split(sep)[:-2])
+path.insert(1, codeDir)
+
+from plottingUtilities.basicPlotting import makeNestedPlotDirectory
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Choose files to analyse

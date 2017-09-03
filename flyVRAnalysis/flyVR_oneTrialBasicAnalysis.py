@@ -14,22 +14,23 @@ from glob import glob
 from os.path import isfile, sep
 from sys import path, exit
 
+# Set path to analysis code directory
+codeDir = sep.join(os.getcwd().split(sep)[:-2])
+path.insert(1, codeDir)
+
 # Import custom plotting functions
-path.insert(1, '/Users/hannah/Dropbox/code/plottingUtilities/')
-from plottingUtilities import myAxisTheme, timeAxisTheme, niceScatterPlot, makeNestedPlotDirectory
-from flyTracePlots import plotPosInRange
-from velocityDistributionPlots import plotVeloHistogram_fancy, velocitySummaryPlot
+from plottingUtilities.basicPlotting import myAxisTheme, timeAxisTheme, niceScatterPlot, makeNestedPlotDirectory
+from plottingUtilities.flyTracePlots import plotPosInRange
+from plottingUtilities.velocityDistributionPlots import plotVeloHistogram_fancy, velocitySummaryPlot
 
 # Import custom data processing functions
-path.insert(1, '/Users/hannah/Dropbox/code/flyVR/utilities/')
-from loadSingleTrial import loadSingleVRLogfile
-from loadObjectCoords import loadObjectCoords
-from objectInteractionPlots import modulationOfRuns
+from flyVR.utilities.loadSingleTrial import loadSingleVRLogfile
+from flyVR.utilities.loadObjectCoords import loadObjectCoords
+from flyVR.utilities.objectInteractionPlots import modulationOfRuns
 
-path.insert(1, '/Users/hannah/Dropbox/code/trajectoryAnalysis/')
-from downsample import donwsampleFOData
-from trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject, computeCurvature
-from periodicWorldAnalysis import collapseToMiniArena
+from trajectoryAnalysis.downsample import donwsampleFOData
+from trajectoryAnalysis.trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject, computeCurvature
+from trajectoryAnalysis.periodicWorldAnalysis import collapseToMiniArena
 
 sns.set_style('ticks')
 

@@ -8,7 +8,6 @@ from tkFileDialog import askopenfilename
 
 from flyVR_oneTrialBasicAnalysis import singleVRTrialAnalysis
 
-
 baseDir = '/Volumes/jayaramanlab/Hannah/Projects/FlyVR/1_Experiments/'
 
 root = Tk()
