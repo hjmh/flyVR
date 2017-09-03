@@ -14,24 +14,25 @@ import matplotlib.colors as colors
 from matplotlib import gridspec
 import seaborn as sns
 
+# Set path to analysis code directory
+codeDir = sep.join(os.getcwd().split(sep)[:-2])
+path.insert(1, codeDir)
+
 # Import custom plotting functions
-path.insert(1, '/Users/hannah/Dropbox/code/plottingUtilities/')
-from plottingUtilities import myAxisTheme, timeAxisTheme, niceScatterPlot, makeNestedPlotDirectory
-from flyTracePlots import plotPosInRange, plotFlyVRtimeStp, plotPolarTrace
-from velocityDistributionPlots import plotVeloHistogram_fancy, velocitySummaryPlot
+from plottingUtilities.basicPlotting import myAxisTheme, timeAxisTheme, niceScatterPlot, makeNestedPlotDirectory
+from plottingUtilities.flyTracePlots import plotPosInRange, plotFlyVRtimeStp, plotPolarTrace
+from plottingUtilities.velocityDistributionPlots import plotVeloHistogram_fancy, velocitySummaryPlot
 
 # Import custom data processing functions
-path.insert(1, '/Users/hannah/Dropbox/code/flyVR/utilities/')
-from loadSingleTrial import loadSingleVRLogfile, rZoneParamsFromLogFile
-from loadObjectCoords import loadObjectCoords, loadObjectCoordIdentities
-from objectInteractionPlots import modulationOfRuns, residencyWithHistograms_splitOnWalking,\
+from flyVR.utilities.loadSingleTrial import loadSingleVRLogfile, rZoneParamsFromLogFile
+from flyVR.utilities.loadObjectCoords import loadObjectCoords, loadObjectCoordIdentities
+from flyVR.utilities.objectInteractionPlots import modulationOfRuns, residencyWithHistograms_splitOnWalking,\
     curvatureVsHeading_DistanceBoxplot, plotResidencyInMiniarena
 
-path.insert(1, '/Users/hannah/Dropbox/code/trajectoryAnalysis/')
-from downsample import donwsampleFOData
-from trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject, cartesian2polar,\
+from trajectoryAnalysis.downsample import donwsampleFOData
+from trajectoryAnalysis.trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject, cartesian2polar,\
     polarCurvature
-from periodicWorldAnalysis import collapseToMiniArena, collapseTwoObjGrid
+from trajectoryAnalysis.periodicWorldAnalysis import collapseToMiniArena, collapseTwoObjGrid
 
 sns.set_style('ticks')
 
@@ -40,9 +41,9 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
 
     # TODO: add savePlots,recomputeFlyData as function arguments
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------
     # Extract folder and file name info
-    # ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------
 
     print('Data file: \n' + fileToAnalyse + '\n')
 
@@ -70,9 +71,9 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
 
     trial = FODataFiles.index(FODataFile) + 1
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------
     # Load or read in logfile data
-    # ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------
 
     # Read in logfile data, parse header ...............................................................................
     header, FOData, numFrames, frameRange, calibParams, coordFile = loadSingleVRLogfile(expDir, FODataFile)
@@ -96,13 +97,13 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
         'with reinforcement zones ' + rZones + ', trial' + str(trial)
     print(titleString)
 
-    # Extract reinforcement zone parameter .............................................................................
+    # Extract reinforcement zone parameter ......................................................
     rZone_rInner, rZone_rOuter, rZone_max, rZone_bl, rZone_gExp = rZoneParamsFromLogFile(expDir, FODataFile)
 
-    # Read in object coordinates .......................................................................................
+    # Read in object coordinates ................................................................
     visibleObjectCoords, invisibleObjectCoords, origin = loadObjectCoords(dataDir, coordFile)
 
-    # Compute movement velocities ......................................................................................
+    # Compute movement velocities ...............................................................
     logTime = np.copy(FOData[:, 0])
     time = np.linspace(0, logTime[-1], numFrames)
 
@@ -111,7 +112,7 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     # N = 60
     # vTrans, vRot, vTransFilt, vRotFilt = velocityFromTrajectory(time, angle, FOData[:, 1], FOData[:, 2], N, numFrames)
 
-    # Down sample data to 20 Hz ........................................................................................
+    # Down sample data to 20 Hz .................................................................
     samplingRate = 20
     time_ds, xPos_ds, yPos_ds, angle_ds, numFrames_ds \
         = donwsampleFOData(samplingRate, logTime, time, FOData[:, 1], FOData[:, 2], angle)
@@ -121,10 +122,10 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     vTrans_ds, vRot_ds, vTransFilt_ds, vRotFilt_ds \
         = velocityFromTrajectory(time_ds, angle_ds, xPos_ds, yPos_ds, N, numFrames_ds)
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Generate basic analysis plots
-    # ------------------------------------------------------------------------------------------------------------------
-    # Time step plot ...................................................................................................
+    # -------------------------------------------------------------------------------------------
+    # Time step plot ............................................................................
 
     plotStp = 5
     tstpfig = plotFlyVRtimeStp(plotStp, FOData[:, 0], titleString)
@@ -134,7 +135,7 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     tstpfig.savefig(analysisDir + 'timeStepPlot/' + 'rZones_' + rZones + sep
                     + FODataFile[0:-4] + '_timeStepPlot_trial' + str(trial) + '.pdf', format='pdf')
 
-    # Plot of walking trace (+ colorbar for time) with object locations ................................................
+    # Plot of walking trace (+ colorbar for time) with object locations .........................
     tStart = 0
     tEnd = len(FOData[:, 1])
     tStep = 72
@@ -170,7 +171,7 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     trajfig.savefig(analysisDir + 'tracePlot/' + 'rZones_' + rZones + sep
                     + FODataFile[0:-4] + '_traceObjectPlot_trial' + str(trial) + '.pdf', format='pdf')
 
-    # Visualise strength of optogenetic stimulation ....................................................................
+    # Visualise strength of optogenetic stimulation .............................................
 
     rEvents = FOData[:, 11]
     # downsample rEvents
@@ -208,7 +209,7 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     trajRZfig.savefig(analysisDir + 'tracePlotRZ/' + 'rZones_' + rZones + sep
                       + FODataFile[0:-4] + '_traceObjectPlot_trial' + str(trial) + '.pdf', format='pdf')
 
-    # Plot velocity distributions of downs sampled data ................................................................
+    # Plot velocity distributions of downs sampled data .........................................
     rotLim = (-5, 5)
     transLim = (0, 30)
     angleLim = (-np.pi, np.pi)
@@ -220,11 +221,11 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     summaryVeloFig_ds.savefig(analysisDir + 'velocityTraces/' + 'rZones_' + rZones + sep
                               + FODataFile[0:-4] + '_veloTraces_ds_trial' + str(trial) + '.pdf', format='pdf')
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     #  Collapse traces to single object cell and plot resulting trace
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
-    # Collapse to 'mini-arena' while preserving the global heading .....................................................
+    # Collapse to 'mini-arena' while preserving the global heading .............................
     arenaRad = 60 # 1/2 distance between cones
     if invisible == 'off':
         objectCoords = np.copy(visibleObjectCoords[0:-3, 0:2])
@@ -240,7 +241,7 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     xPosMA_ds = f_xPosMA(time_ds)
     yPosMA_ds = f_yPosMA(time_ds)
 
-    # Plot collapsed, down sampled trace ...............................................................................
+    # Plot collapsed, down sampled trace ........................................................
     tStart = 0
     tEnd = numFrames_ds
     tStep = 4
@@ -283,16 +284,16 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     colTrFig.savefig(analysisDir + 'tracePlotMA/' + 'rZones_' + rZones + sep
                      + FODataFile[0:-4] + '_traceObjectPlot_ds_trial' + str(trial) + '.pdf', format='pdf')
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Compute heading angle relative to closest object (use collapsed coordinates)
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     # Compute parameters characterising fly's relationship to object ...................................................
     objLocation = [0, 0]
     objDirection, objDistance, gammaFull, gamma, gammaV \
         = relationToObject(time_ds, xPosMA_ds, yPosMA_ds, angle_ds, objLocation)
 
-    # Change in heading rel. to object .................................................................................
+    # Change in heading rel. to object ..........................................................
     near = 6
     far = arenaRad
     vTransTH = 2
@@ -309,7 +310,7 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     selectedRangeDistPreTurn = np.logical_and(np.logical_and(objDistance > near, objDistance < far), preTurnMask)
     selectedRangeDistTurn = np.logical_and(np.logical_and(objDistance > near, objDistance < far), turnMask)
 
-    # Visualise effect of turns ........................................................................................
+    # Visualise effect of turns .................................................................
     turnEffectFig = plt.figure(figsize=(12, 6))
     gs = gridspec.GridSpec(3, 3, height_ratios=np.hstack((1, 1.5, 1.5)), width_ratios=np.hstack((1.5, 1, 1)))
 
@@ -360,9 +361,9 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     turnEffectFig.savefig(analysisDir + 'effectOfTurn/' + 'rZones_' + rZones + sep
                           + FODataFile[0:-4] + '_turnHeadingChange_trial' + str(trial) + '.pdf', format='pdf')
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Convert trajectory to polar coordinates and visualise trace and effect of turns
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     # transform trajectory to polar coordinates
     objDist, theta = cartesian2polar(xPosMA_ds, yPosMA_ds)
@@ -413,9 +414,9 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     fig.savefig(analysisDir + 'polarTrace/' + 'rZones_' + rZones + sep
                 + FODataFile[0:-4] + '_polarTrace_trial' + str(trial) + '.pdf', format='pdf')
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Save position and velocities for future analysis
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     toSave = {'time': time_ds,
               'xPos': xPos_ds,
@@ -436,9 +437,9 @@ def singleVROptogenTrialAnalysis(fileToAnalyse):
     # Save data in this format as *.npy for easy loading..
     np.save(expDir + FODataFile[:-4], toSave)
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     print('\n \n Analysis ran successfully. \n \n')
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     plt.close('all')
 
@@ -450,9 +451,9 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
 
     # TODO: add savePlots,recomputeFlyData as function arguments
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Extract folder and file name info
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     print('Data file: \n' + fileToAnalyse + '\n')
 
@@ -499,20 +500,20 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
 
     print(titleString)
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Load or read in logfile data
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     # Read in logfile data, parse header ...............................................................................
     header, FOData, numFrames, frameRange, calibParams, coordFile = loadSingleVRLogfile(expDir, FODataFile)
 
-    # Extract reinforcement zone parameter .............................................................................
+    # Extract reinforcement zone parameter ......................................................
     #rZone_rInner, rZone_rOuter, rZone_max, rZone_bl, rZone_gExp = rZoneParamsFromLogFile(expDir, FODataFile)
 
-    # Read in object coordinates .......................................................................................
+    # Read in object coordinates ................................................................
     visibleObjectCoords, visibleObjectName, invisibleObjectCoords, origin = loadObjectCoordIdentities(dataDir, coordFile)
 
-    # Compute movement velocities ......................................................................................
+    # Compute movement velocities ...............................................................
     logTime = np.copy(FOData[:, 0])
     time = np.linspace(0, logTime[-1], numFrames)
 
@@ -521,7 +522,7 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     # N = 60
     # vTrans, vRot, vTransFilt, vRotFilt = velocityFromTrajectory(time, angle, FOData[:, 1], FOData[:, 2], N, numFrames)
 
-    # Down sample data to 20 Hz ........................................................................................
+    # Down sample data to 20 Hz .................................................................
     samplingRate = 20
     time_ds, xPos_ds, yPos_ds, angle_ds, numFrames_ds \
         = donwsampleFOData(samplingRate, logTime, time, FOData[:, 1], FOData[:, 2], angle)
@@ -531,10 +532,10 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     vTrans_ds, vRot_ds, vTransFilt_ds, vRotFilt_ds \
         = velocityFromTrajectory(time_ds, angle_ds, xPos_ds, yPos_ds, N, numFrames_ds)
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Generate basic analysis plots
-    # ------------------------------------------------------------------------------------------------------------------
-    # Time step plot ...................................................................................................
+    # -------------------------------------------------------------------------------------------
+    # Time step plot ............................................................................
 
     plotStp = 5
     tstpfig = plotFlyVRtimeStp(plotStp, FOData[:, 0], titleString)
@@ -544,7 +545,7 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     tstpfig.savefig(analysisDir + 'timeStepPlot/' + trialType + 'Trial' + sep + FODataFile[0:-4] + '_timeStepPlot.pdf',
                     format='pdf')
 
-    # Plot of walking trace (+ colorbar for time) with object locations ................................................
+    # Plot of walking trace (+ colorbar for time) with object locations .........................
 
     coneShape = np.asarray([bool('Cone' in objName) for objName in visibleObjectName])
     cyliShape = np.asarray([bool('Cyli' in objName) for objName in visibleObjectName])
@@ -568,8 +569,7 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
                    facecolors='black', edgecolors='none', marker='^')
     axTraj.scatter(visibleObjectCoords[cyliShape, 0], visibleObjectCoords[cyliShape, 1], 50, alpha=0.5,
                    facecolors='black', edgecolors='none', marker='s')
-    #axTraj.scatter(invisibleObjectCoords[4:, 0], invisibleObjectCoords[4:, 1], 50, alpha=0.5,
-    #               facecolors='none', edgecolors='black')
+
     axTraj.set_xlabel(header[1], fontsize=12)
     axTraj.set_ylabel(header[2], fontsize=12)
     axTraj.set_title('Walking trace of ' + titleString, fontsize=14)
@@ -586,7 +586,7 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     trajfig.savefig(analysisDir + 'tracePlot/' + trialType + 'Trial' + sep
                     + FODataFile[0:-4] + '_traceObjectPlot.pdf', format='pdf')
 
-    # Visualise strength of optogenetic stimulation ....................................................................
+    # Visualise strength of optogenetic stimulation .............................................
 
     rEvents = FOData[:, 11]
     # downsample rEvents
@@ -624,7 +624,7 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     trajRZfig.savefig(analysisDir + 'tracePlotRZ/' + trialType + 'Trial' + sep
                     + FODataFile[0:-4] + '_traceObjectPlot.pdf', format='pdf')
 
-    # Plot velocity distributions of downs sampled data ................................................................
+    # Plot velocity distributions of downs sampled data .........................................
     rotLim = (-5, 5)
     transLim = (0, 30)
     angleLim = (-np.pi, np.pi)
@@ -636,11 +636,11 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     summaryVeloFig_ds.savefig(analysisDir + 'velocityTraces/' + trialType + 'Trial' + sep
                               + FODataFile[0:-4] + '_veloTraces_ds.pdf', format='pdf')
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     #  Collapse traces to single object cell and plot resulting trace
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
-    # Collapse to 'mini-arena' while preserving the global heading .....................................................
+    # Collapse to 'mini-arena' while preserving the global heading ..............................
     gridSize = 60.0 # closest distance between landmarks
     gridRepeat = (6, 5) # grid height in repeats of gridSize in x and y
     xPosMA, yPosMA = collapseTwoObjGrid(FOData[:, 1], FOData[:, 2], gridSize, gridRepeat)
@@ -652,7 +652,7 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     xPosMA_ds = f_xPosMA(time_ds)
     yPosMA_ds = f_yPosMA(time_ds)
 
-    # Plot collapsed, down sampled trace ...............................................................................
+    # Plot collapsed, down sampled trace ........................................................
     tStart = 0
     tEnd = numFrames_ds
     tStep = 4
@@ -683,20 +683,14 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     plt.xlim((0, time_ds[-1]))
     timeAxisTheme(axTime)
 
-    # if rZones == 'on':
-    #    rZoneRange = float(rZone_rOuter - rZone_rInner)
-    #    for zRad in range(rZone_rInner, rZone_rOuter):
-    #        circle1 = plt.Circle((0, 0), zRad, color='r', alpha=1.0/rZoneRange)
-    #        axTraj.add_artist(circle1)
-
     makeNestedPlotDirectory(analysisDir, 'tracePlotMA/', trialType + 'Trial' + sep)
 
     colTrFig.savefig(analysisDir + 'tracePlotMA/' + trialType + 'Trial' + sep
                      + FODataFile[0:-4] + '_traceObjectPlot_ds.pdf', format='pdf')
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     # Save position and velocities for future analysis
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     toSave = {'time': time_ds,
               'xPos': xPos_ds,
@@ -711,9 +705,9 @@ def singleTwoObjVROptogenTrialAnalysis(fileToAnalyse):
     # Save data in this format as *.npy for easy loading..
     np.save(expDir + FODataFile[:-4], toSave)
 
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     print('\n \n Analysis ran successfully. \n \n')
-    # ------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
 
     plt.close('all')
 

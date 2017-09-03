@@ -22,10 +22,12 @@ from tkFileDialog import askdirectory, askopenfilename
 
 from flyVRoptogenetics_oneTrialBasicAnalysis import singleVROptogenTrialAnalysis
 
-path.insert(1, '/Users/hannah/Dropbox/code/plottingUtilities/')
-from plottingUtilities import makeNestedPlotDirectory, myAxisTheme
-from objectInteractionPlots import residencyWithHistograms_splitOnWalking, curvatureVsHeading_DistanceBoxplot,\
-    plotResidencyInMiniarena
+# Set path to analysis code directory
+codeDir = sep.join(os.getcwd().split(sep)[:-2])
+path.insert(1, codeDir)
+
+from plottingUtilities.basicPlotting import makeNestedPlotDirectory, myAxisTheme
+from plottingUtilities.objectInteractionPlots import residencyWithHistograms_splitOnWalking, curvatureVsHeading_DistanceBoxplot, plotResidencyInMiniarena
 
 # Choose files to analyse ..............................................................................................
 

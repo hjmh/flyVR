@@ -14,9 +14,9 @@ from tkFileDialog import askdirectory, askopenfilename
 
 from flyVRoptogenetics_oneTrialBasicAnalysis import singleVROptogenTrialAnalysis
 
-# ----------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
 # Choose files to analyse
-# ----------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
 
 baseDir = '/Volumes/jayaramanlab/Hannah/Projects/FlyVR/1_Experiments/'
 
@@ -35,9 +35,9 @@ print('\n Analysing the following log files:\n')
 print(FODataFiles)
 
 for fileToAnalyse in FODataFiles:
-    # ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------
     # Run for each file in folder
-    # ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------
     returnVal = singleVROptogenTrialAnalysis(expDir + fileToAnalyse)
 
     FODatLoad = np.load(expDir + fileToAnalyse[:-3] + 'npy')[()]
