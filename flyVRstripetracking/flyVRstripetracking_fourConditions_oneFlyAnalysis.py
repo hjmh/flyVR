@@ -15,21 +15,21 @@ sns.set_style('ticks')
 
 from sys import path
 
-# import basic data processing function
-path.insert(1, '/Users/hannah/Dropbox/code/flyVR/utilities/')
-from loadSingleTrial import loadSingleVRLogfile
-from loadObjectCoords import loadObjectCoordIdentities
+# Set path to analysis code directory
+path.insert(1, '/Users/hannah/Documents/code/')
 
-path.insert(1, '/Users/hannah/Dropbox/code/trajectoryAnalysis/')
-from downsample import donwsampleFOData
-from trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject
-from periodicWorldAnalysis import collapseToMiniArena
+# import basic data processing function
+from flyVR.utilities.loadSingleTrial import loadSingleVRLogfile
+from flyVR.utilities.loadObjectCoords import loadObjectCoordIdentities
+
+from trajectoryAnalysis.downsample import donwsampleFOData
+from trajectoryAnalysis.trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject
+from trajectoryAnalysis.periodicWorldAnalysis import collapseToMiniArena
 
 # import custom plotting functions
-path.insert(1, '/Users/hannah/Dropbox/code/plottingUtilities/')
-from plottingUtilities import myAxisTheme, timeAxisTheme, makeNestedPlotDirectory
-from velocityDistributionPlots import velocitySummaryPlot
-from flyTracePlots import plotPosInRange, plotFlyVRtimeStp
+from plottingUtilities.basicPlotting import myAxisTheme, timeAxisTheme, makeNestedPlotDirectory
+from plottingUtilities.velocityDistributionPlots import velocitySummaryPlot
+from plottingUtilities.flyTracePlots import plotPosInRange, plotFlyVRtimeStp
 
 
 def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
@@ -45,21 +45,21 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
     print(titleString)
     print('scene type: ' + sceneType)
 
-    # Load data ........................................................................................................
+    # Load data .................................................................................
     # Load FlyOver log file, extract calibration paramater and name of cood file
     header, FOData, numFrames, frameRange, calibParams, coordFile = loadSingleVRLogfile(expDir, FODataFile)
 
     # Read in object coordinates
     visObjCoords, visObjName, invisObjCoords, origin = loadObjectCoordIdentities(dataDir, coordFile)
 
-    # Compute derrived values ..........................................................................................
+    # Compute derrived values ...................................................................
     # Compute movement velocities
     logTime = np.copy(FOData[:, 0])
     time = np.linspace(0, logTime[-1], numFrames)
 
     angle = convertRawHeadingAngle(FOData[:, 5])
 
-    # Collapse to 'mini-arena' while preserving the global heading  ---  if trialtype is 'plane' .......................
+    # Collapse to 'mini-arena' while preserving the global heading -- if trialtype is 'plane' ...
     if sceneType=='plane':
         xPos = FOData[:, 1]
         yPos = FOData[:, 2]
@@ -69,7 +69,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
 
         xPosMA, yPosMA = collapseToMiniArena(xPos, yPos, arenaRad, objectCoords)
 
-    # Compute fly's walking velocieties from TM raw values  ---  if trial type is 'stripe' .............................
+    # Compute fly's walking velocieties from TM raw values -- if trial type is 'stripe' .........
     if sceneType=='stripe':
         dx1 = FOData[:, 6]
         dy1 = FOData[:, 7]
@@ -121,7 +121,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
 
         vTrans = np.hypot(xTM_i, yTM_i)
 
-    # Down sample data to 20 Hz ........................................................................................
+    # Down sample data to 20 Hz .................................................................
     samplingRate = 20
     time_ds, xPos_ds, yPos_ds, angle_ds, numFrames_ds = donwsampleFOData(samplingRate, logTime, time, xPos, yPos, angle)
 
@@ -138,7 +138,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
         xPosMA_ds = f_xPosMA(time_ds)
         yPosMA_ds = f_yPosMA(time_ds)
 
-    # Generate basic analysis plots ....................................................................................
+    # Generate basic analysis plots .............................................................
     # Time step plot
     tstpfig = plt.figure(figsize=(10, 3))
     gs = gridspec.GridSpec(1, 2, width_ratios=np.hstack((2, 1)))
@@ -199,7 +199,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
         gamma = abs(angle_ds)
         gammaFull = angle_ds
 
-    # Stripe tracking trial ............................................................................................
+    # Stripe tracking trial .....................................................................
     # Heading angle distribution (if stripe)
     headingfig = plt.figure(figsize=(10,8))
 
@@ -251,7 +251,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
 
     headingfig.savefig(dataDir + 'analysis/heading/' + FODataFile[0:-4] + '_headingDistribution.pdf', format='pdf')
 
-    # Walking in 2D plane trial ........................................................................................
+    # Walking in 2D plane trial .................................................................
     # Plot trace and mark object locations
     if sceneType == 'plane':
 
@@ -324,7 +324,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
         colTrajFig.savefig(dataDir + 'analysis/collapsedTracePlot/' + FODataFile[0:-4] +
                            '_traceObjectPlot_ds.pdf', format='pdf')
 
-    # Save values for future analysis ..................................................................................
+    # Save values for future analysis ...........................................................
     if sceneType == 'stripe':
         xPosMA_ds = np.nan*np.ones(np.size(time_ds))
         yPosMA_ds = np.nan*np.ones(np.size(time_ds))

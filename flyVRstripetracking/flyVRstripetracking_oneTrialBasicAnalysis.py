@@ -15,24 +15,24 @@ sns.set_style('ticks')
 
 from sys import path
 
-# import basic data processing function
-path.insert(1, '/Users/hannah/Dropbox/code/flyVR/utilities/')
-from loadSingleTrial import loadSingleVRLogfile
-from loadObjectCoords import loadObjectCoordIdentities
+# Set path to analysis code directory
+path.insert(1, '/Users/hannah/Documents/code/')
 
-path.insert(1, '/Users/hannah/Dropbox/code/trajectoryAnalysis/')
-from downsample import donwsampleFOData
-from trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject
-from periodicWorldAnalysis import collapseToMiniArena
+# import basic data processing function
+from flyVR.utilities.loadSingleTrial import loadSingleVRLogfile
+from flyVR.utilities.loadObjectCoords import loadObjectCoordIdentities
+
+from trajectoryAnalysis.downsample import donwsampleFOData
+from trajectoryAnalysis.trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject
+from trajectoryAnalysis.periodicWorldAnalysis import collapseToMiniArena
 
 # import custom plotting functions
-path.insert(1, '/Users/hannah/Dropbox/code/plottingUtilities/')
-from plottingUtilities import myAxisTheme
-from velocityDistributionPlots import velocitySummaryPlot
+from plottingUtilities.basicPlotting import myAxisTheme
+from plottingUtilities.velocityDistributionPlots import velocitySummaryPlot
 
-# ----------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
 # Define basic analysis script function
-# ----------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
 
 def processStripetrackingTrial(experimentDir, logFile, dataDir, titleString):
 
