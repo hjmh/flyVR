@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.ndimage.filters import gaussian_filter
 
-from os import mkdir
+from os import mkdir, getcwd
 from os.path import isfile, sep
 from sys import path, exit
 from glob import glob
@@ -15,7 +15,7 @@ from matplotlib import gridspec
 import seaborn as sns
 
 # Set path to analysis code directory
-codeDir = sep.join(os.getcwd().split(sep)[:-2])
+codeDir = sep.join(getcwd().split(sep)[:-2])
 path.insert(1, codeDir)
 
 # Import custom plotting functions
