@@ -9,13 +9,13 @@ from matplotlib import gridspec
 import matplotlib.colors as colors
 import seaborn as sns
 
-from os import listdir, mkdir
+from os import listdir, mkdir, getcwd
 from glob import glob
 from os.path import isfile, sep
 from sys import path, exit
 
 # Set path to analysis code directory
-codeDir = sep.join(os.getcwd().split(sep)[:-2])
+codeDir = sep.join(getcwd().split(sep)[:-2])
 path.insert(1, codeDir)
 
 # Import custom plotting functions

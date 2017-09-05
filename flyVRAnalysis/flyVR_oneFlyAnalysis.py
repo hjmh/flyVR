@@ -3,7 +3,7 @@
 __author__ = 'Hannah Haberkern, hjmhaberkern@gmail.com'
 
 import numpy as np
-from os import listdir, mkdir, walk
+from os import listdir, mkdir, walk, getcwd
 from os.path import isfile, sep
 from sys import path, exit
 from glob import glob
@@ -17,7 +17,7 @@ from tkFileDialog import askdirectory, askopenfilename
 from flyVR_oneTrialBasicAnalysis import singleVRTrialAnalysis
 
 # Set path to analysis code directory
-codeDir = sep.join(os.getcwd().split(sep)[:-2])
+codeDir = sep.join(getcwd().split(sep)[:-2])
 path.insert(1, codeDir)
 
 from plottingUtilities.basicPlotting import makeNestedPlotDirectory
