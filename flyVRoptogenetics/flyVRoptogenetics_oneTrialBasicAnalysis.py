@@ -22,12 +22,12 @@ path.insert(1, codeDir)
 from plottingUtilities.basicPlotting import myAxisTheme, timeAxisTheme, niceScatterPlot, makeNestedPlotDirectory
 from plottingUtilities.flyTracePlots import plotPosInRange, plotFlyVRtimeStp, plotPolarTrace
 from plottingUtilities.velocityDistributionPlots import plotVeloHistogram_fancy, velocitySummaryPlot
+from plottingUtilities.objectInteractionPlots import modulationOfRuns, residencyWithHistograms_splitOnWalking,\
+    curvatureVsHeading_DistanceBoxplot, plotResidencyInMiniarena
 
 # Import custom data processing functions
 from flyVR.utilities.loadSingleTrial import loadSingleVRLogfile, rZoneParamsFromLogFile
 from flyVR.utilities.loadObjectCoords import loadObjectCoords, loadObjectCoordIdentities
-from flyVR.utilities.objectInteractionPlots import modulationOfRuns, residencyWithHistograms_splitOnWalking,\
-    curvatureVsHeading_DistanceBoxplot, plotResidencyInMiniarena
 
 from trajectoryAnalysis.downsample import donwsampleFOData
 from trajectoryAnalysis.trajectoryDerivedParams import convertRawHeadingAngle, velocityFromTrajectory, relationToObject, cartesian2polar,\
