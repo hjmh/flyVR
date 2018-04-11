@@ -27,20 +27,27 @@ from trajectoryAnalysis.trajectoryDerivedParams import convertRawHeadingAngle, v
 from trajectoryAnalysis.periodicWorldAnalysis import collapseToMiniArena
 
 # import custom plotting functions
-from plottingUtilities.basicPlotting import myAxisTheme, timeAxisTheme, makeNestedPlotDirectory
+from plottingUtilities.basicPlotting import myAxisTheme, timeAxisTheme, makeNestedPlotDirectory, _myAccentList
 from plottingUtilities.velocityDistributionPlots import velocitySummaryPlot
 from plottingUtilities.flyTracePlots import plotPosInRange, plotFlyVRtimeStp
 
-
 def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
+    myFlyCMap = colors.LinearSegmentedColormap.from_list('myAccent', _myAccentList, N=256, gamma=1.0)
 
     dataFileParts = FODataFile.split('_')
     sceneName = dataFileParts[0]
-
-    if 'Stripe' in sceneName or 'stripe' in sceneName:
+    if ('Stripe' in sceneName or 'stripe' in sceneName):
         sceneType = 'stripe'
+
+    elif ('Cone20' in sceneName or 'cone20' in sceneName):
+        sceneType = 'stripe'
+        sceneName = 'fixed' + sceneName
+
     else:
         sceneType = 'plane'
+
+    if ('inverted' in sceneName or 'Inverted' in sceneName):
+        sceneName = 'inverted' + sceneName
 
     print(titleString)
     print('scene type: ' + sceneType)
@@ -60,7 +67,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
     angle = convertRawHeadingAngle(FOData[:, 5])
 
     # Collapse to 'mini-arena' while preserving the global heading -- if trialtype is 'plane' ...
-    if sceneType=='plane':
+    if sceneType == 'plane':
         xPos = FOData[:, 1]
         yPos = FOData[:, 2]
         # arenaRad = 1/2 distance between objects
@@ -70,7 +77,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
         xPosMA, yPosMA = collapseToMiniArena(xPos, yPos, arenaRad, objectCoords)
 
     # Compute fly's walking velocieties from TM raw values -- if trial type is 'stripe' .........
-    if sceneType=='stripe':
+    if sceneType == 'stripe':
         dx1 = FOData[:, 6]
         dy1 = FOData[:, 7]
         dx2 = FOData[:, 8]
@@ -260,7 +267,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
         tEnd = len(FOData[:, 1])
         tStep = 72
         frameRange = range(tStart, tEnd, tStep)
-        colMap = 'Accent'
+        colMap = myFlyCMap
         arrowLength = 5
 
         trajfig = plt.figure(figsize=(10, 10))
@@ -296,7 +303,7 @@ def processTrackingTrial(expDir, FODataFile, dataDir, titleString):
         tEnd = numFrames_ds
         tStep = 4
         frameRange = range(tStart, tEnd, tStep)
-        colMap = 'Accent'
+        colMap = myFlyCMap
 
         colTrajFig = plt.figure(figsize=(9, 10))
         gs = gridspec.GridSpec(2, 1, height_ratios=np.hstack((10, 1)))
